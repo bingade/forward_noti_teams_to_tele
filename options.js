@@ -2,8 +2,7 @@ const DEFAULT_SETTINGS = {
   enabled: false,
   botToken: "",
   chatId: "",
-  accessUrl: "",
-  fallbackUrl: "https://teams.microsoft.com/",
+  accessUrl: "https://teams.microsoft.com/v2/",
   includePageUrl: false,
   dedupeTtlMinutes: 5,
   minTextLength: 8
@@ -37,7 +36,7 @@ tabButtons.forEach((button) => {
 
 async function restoreSettings() {
   const stored = await chrome.storage.local.get(Object.keys(DEFAULT_SETTINGS));
-  const settings = { ...DEFAULT_SETTINGS, ...stored };
+  const settings = normalizeSettings({ ...DEFAULT_SETTINGS, ...stored });
 
   for (const [key, field] of Object.entries(fields)) {
     if (!field) {
@@ -77,22 +76,36 @@ async function sendTest() {
 }
 
 function readSettingsFromForm() {
-  return {
+  return normalizeSettings({
     enabled: fields.enabled.checked,
     botToken: fields.botToken.value.trim(),
     chatId: fields.chatId.value.trim(),
     accessUrl: fields.accessUrl.value.trim(),
-    fallbackUrl: fields.fallbackUrl.value.trim(),
     includePageUrl: fields.includePageUrl.checked,
     dedupeTtlMinutes: clampNumber(fields.dedupeTtlMinutes.value, 1, 120, 5),
     minTextLength: clampNumber(fields.minTextLength.value, 1, 200, 8)
-  };
+  });
 }
 
-function clampNumber(value, min, max, fallback) {
+function normalizeSettings(settings) {
+  const nextSettings = { ...settings };
+  if (isDeprecatedCallbackUrl(nextSettings.accessUrl)) {
+    nextSettings.accessUrl = DEFAULT_SETTINGS.accessUrl;
+  }
+
+  return nextSettings;
+}
+
+function isDeprecatedCallbackUrl(value) {
+  return /^intent:\/\//i.test(String(value || "")) ||
+    /^firefox:\/\//i.test(String(value || "")) ||
+    /org\.mozilla\.firefox/i.test(String(value || ""));
+}
+
+function clampNumber(value, min, max, defaultValue) {
   const number = Number(value);
   if (!Number.isFinite(number)) {
-    return fallback;
+    return defaultValue;
   }
 
   return Math.min(max, Math.max(min, number));
@@ -126,7 +139,7 @@ function renderLogItem(log) {
 
   const meta = document.createElement("div");
   meta.className = "log-meta";
-  meta.textContent = `${formatDate(log.sentAt)} · ${log.source || "Teams"}`;
+  meta.textContent = `${formatDate(log.sentAt)} - ${log.source || "Teams"}`;
 
   const sender = document.createElement("strong");
   sender.textContent = log.sender || "Teams";

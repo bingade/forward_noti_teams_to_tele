@@ -2,8 +2,7 @@ const DEFAULT_SETTINGS = {
   enabled: false,
   botToken: "",
   chatId: "",
-  accessUrl: "",
-  fallbackUrl: "https://teams.microsoft.com/",
+  accessUrl: "https://teams.microsoft.com/v2/",
   includePageUrl: false,
   dedupeTtlMinutes: 5,
   minTextLength: 8
@@ -16,7 +15,7 @@ const MAX_SENT_LOGS = 100;
 
 chrome.runtime.onInstalled.addListener(async () => {
   const current = await chrome.storage.local.get(Object.keys(DEFAULT_SETTINGS));
-  await chrome.storage.local.set({ ...DEFAULT_SETTINGS, ...compact(current) });
+  await chrome.storage.local.set(normalizeSettings({ ...DEFAULT_SETTINGS, ...compact(current) }));
 });
 
 if (chrome.action && chrome.action.onClicked) {
@@ -97,13 +96,28 @@ async function sendTestTelegramMessage() {
 
 async function loadSettings() {
   const stored = await chrome.storage.local.get(Object.keys(DEFAULT_SETTINGS));
-  return { ...DEFAULT_SETTINGS, ...compact(stored) };
+  return normalizeSettings({ ...DEFAULT_SETTINGS, ...compact(stored) });
 }
 
 function compact(value) {
   return Object.fromEntries(
     Object.entries(value || {}).filter(([, item]) => item !== undefined && item !== null)
   );
+}
+
+function normalizeSettings(settings) {
+  const nextSettings = { ...settings };
+  if (isDeprecatedCallbackUrl(nextSettings.accessUrl)) {
+    nextSettings.accessUrl = DEFAULT_SETTINGS.accessUrl;
+  }
+
+  return nextSettings;
+}
+
+function isDeprecatedCallbackUrl(value) {
+  return /^intent:\/\//i.test(String(value || "")) ||
+    /^firefox:\/\//i.test(String(value || "")) ||
+    /org\.mozilla\.firefox/i.test(String(value || ""));
 }
 
 function normalizePayload(payload, sender, settings) {
@@ -303,11 +317,7 @@ function formatTelegramMessage(message, settings) {
   ];
 
   if (settings.accessUrl) {
-    lines.push(`<b>Open:</b> <a href="${escapeAttribute(settings.accessUrl)}">Open in Firefox</a>`);
-  }
-
-  if (settings.fallbackUrl) {
-    lines.push(`<b>Fallback:</b> ${escapeHtml(settings.fallbackUrl)}`);
+    lines.push(`<b>Open:</b> <a href="${escapeAttribute(settings.accessUrl)}">Open Teams</a>`);
   }
 
   if (message.pageUrl) {
