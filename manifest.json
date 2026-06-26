@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "Teams Telegram Notifier",
+  "version": "0.1.0",
+  "description": "Forward Microsoft Teams web notification previews to Telegram.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://api.telegram.org/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://teams.microsoft.com/*",
+        "https://*.teams.microsoft.com/*",
+        "https://teams.live.com/*",
+        "https://*.teams.live.com/*"
+      ],
+      "js": [
+        "src/content.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/injected-notification-hook.js"
+      ],
+      "matches": [
+        "https://teams.microsoft.com/*",
+        "https://*.teams.microsoft.com/*",
+        "https://teams.live.com/*",
+        "https://*.teams.live.com/*"
+      ]
+    }
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "action": {
+    "default_title": "Teams Telegram Notifier"
+  }
+}

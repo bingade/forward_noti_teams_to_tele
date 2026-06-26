@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Teams Telegram Notifier</title>
+    <link rel="stylesheet" href="options.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <h1>Teams Telegram Notifier</h1>
+        <p>Forward Teams web notification previews to Telegram from this browser profile.</p>
+      </header>
+
+      <nav class="tabs" aria-label="Options sections">
+        <button class="tab active" type="button" data-tab-target="settings">Settings</button>
+        <button class="tab" type="button" data-tab-target="logs">Sent logs</button>
+      </nav>
+
+      <form id="settings-form" class="panel active" data-tab-panel="settings">
+        <label class="toggle">
+          <input id="enabled" type="checkbox">
+          <span>Enable forwarding</span>
+        </label>
+
+        <label>
+          <span>Telegram bot token</span>
+          <input id="botToken" type="password" autocomplete="off" placeholder="123456789:ABC...">
+        </label>
+
+        <label>
+          <span>Telegram chat ID</span>
+          <input id="chatId" type="text" autocomplete="off" placeholder="-1001234567890">
+        </label>
+
+        <label>
+          <span>Open callback URL</span>
+          <input id="accessUrl" type="text" autocomplete="off" placeholder="intent://teams.microsoft.com/#Intent;scheme=https;package=org.mozilla.firefox;end">
+        </label>
+
+        <label>
+          <span>Fallback Teams URL</span>
+          <input id="fallbackUrl" type="url" autocomplete="off" placeholder="https://teams.microsoft.com/">
+        </label>
+
+        <div class="grid">
+          <label>
+            <span>Dedupe TTL minutes</span>
+            <input id="dedupeTtlMinutes" type="number" min="1" max="120" step="1">
+          </label>
+
+          <label>
+            <span>Minimum preview length</span>
+            <input id="minTextLength" type="number" min="1" max="200" step="1">
+          </label>
+        </div>
+
+        <label class="toggle">
+          <input id="includePageUrl" type="checkbox">
+          <span>Include current Teams page URL as debug info</span>
+        </label>
+
+        <div class="actions">
+          <button type="submit">Save</button>
+          <button id="test-button" type="button">Send test</button>
+        </div>
+
+        <p id="status" role="status"></p>
+      </form>
+
+      <section class="panel" data-tab-panel="logs">
+        <div class="log-toolbar">
+          <p id="log-summary">No sent messages.</p>
+          <div class="actions compact">
+            <button id="refresh-logs-button" type="button">Refresh</button>
+            <button id="clear-logs-button" type="button">Clear logs</button>
+          </div>
+        </div>
+
+        <ol id="sent-log-list" class="log-list"></ol>
+      </section>
+    </main>
+
+    <script src="options.js"></script>
+  </body>
+</html>
