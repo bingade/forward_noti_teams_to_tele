@@ -10,12 +10,6 @@ Chrome extension for forwarding Microsoft Teams web notification previews to Tel
 
 The extension only watches Teams Web pages that are open in Chrome.
 
-Default Teams callback URL:
-
-```text
-https://teams.microsoft.com/v2/
-```
-
 ## Create a Telegram Bot
 
 1. Open Telegram and search for `@BotFather`.
