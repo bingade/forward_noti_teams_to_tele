@@ -2,18 +2,63 @@
 
 Chrome extension for forwarding Microsoft Teams web notification previews to Telegram.
 
+## Prerequisites
+
+1. Open Chrome and sign in to [Teams Web](https://teams.microsoft.com/v2/).
+2. Keep one Teams Web tab logged in.
+3. Allow Teams browser notifications when Chrome asks.
+
+The extension only watches Teams Web pages that are open in Chrome.
+
+## Android URL Note
+
+The Open callback URL is only useful for Android devices.
+
+Recommended Android Firefox callback:
+
+```text
+intent://teams.microsoft.com/#Intent;scheme=https;package=org.mozilla.firefox;end
+```
+
+If you do not need Android-specific behavior, leave Open callback URL empty and use this fallback:
+
+```text
+https://teams.microsoft.com/v2/
+```
+
+Some Telegram clients may not open custom Android intent URLs. The fallback Teams URL is always included as a plain link.
+
+## Create a Telegram Bot
+
+1. Open Telegram and search for `@BotFather`.
+2. Send `/newbot`.
+3. Follow the prompts to choose a bot name and username.
+4. Copy the bot token that BotFather returns.
+5. Open a chat with your new bot and send any message, such as `hello`.
+6. In a browser, open this URL after replacing `<BOT_TOKEN>`:
+
+```text
+https://api.telegram.org/bot<BOT_TOKEN>/getUpdates
+```
+
+7. Find `message.chat.id` in the JSON response. That number is your Telegram chat ID.
+
+For a private chat, the chat ID usually looks like a normal number, for example `6091378862`.
+For a group or channel, it may be negative, for example `-1001234567890`.
+
 ## Install
 
 1. Open `chrome://extensions`.
 2. Enable Developer mode.
 3. Select Load unpacked.
-4. Choose this folder: `extension/teams-telegram-notifier`.
+4. Choose this repository folder, the folder that contains `manifest.json`.
 5. Open the extension options page and enter:
    - Telegram bot token
    - Telegram chat ID
-   - open callback URL, such as `intent://teams.microsoft.com/#Intent;scheme=https;package=org.mozilla.firefox;end`
-   - fallback Teams URL, such as `https://teams.microsoft.com/`
+   - Open callback URL, Android only, optional
+   - Fallback Teams URL, such as `https://teams.microsoft.com/v2/`
 6. Click Save, then Send test.
+7. Reload the Teams Web tab after installing or updating the extension.
 
 The callback URL is sent as a Telegram HTML link labeled `Open in Firefox`.
 The fallback URL is sent as plain text because some Telegram clients do not open custom schemes or Android intent links consistently.
