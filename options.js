@@ -2,14 +2,20 @@ const DEFAULT_SETTINGS = {
   enabled: false,
   botToken: "",
   chatId: "",
-  accessUrl: "https://teams.microsoft.com/v2/",
-  includePageUrl: false,
+  teamsEnabled: true,
+  teamsAccessUrl: "https://teams.microsoft.com/v2/",
+  includeTeamsPageUrl: false,
+  outlookEnabled: true,
+  outlookAccessUrl: "https://outlook.office.com/mail/",
+  includeOutlookPageUrl: false,
   dedupeTtlMinutes: 5,
   minTextLength: 8
 };
 
-const form = document.querySelector("#settings-form");
-const statusElement = document.querySelector("#status");
+const LEGACY_SETTINGS_KEYS = ["accessUrl", "includePageUrl"];
+const SETTINGS_KEYS = [...Object.keys(DEFAULT_SETTINGS), ...LEGACY_SETTINGS_KEYS];
+
+const forms = Array.from(document.querySelectorAll("[data-settings-form]"));
 const tabButtons = Array.from(document.querySelectorAll("[data-tab-target]"));
 const panels = Array.from(document.querySelectorAll("[data-tab-panel]"));
 const logSummary = document.querySelector("#log-summary");
@@ -21,7 +27,7 @@ const fields = Object.fromEntries(
 );
 
 document.addEventListener("DOMContentLoaded", restoreSettings);
-form.addEventListener("submit", saveSettings);
+forms.forEach((form) => form.addEventListener("submit", saveSettings));
 document.querySelector("#test-button").addEventListener("click", sendTest);
 refreshLogsButton.addEventListener("click", loadSentLogs);
 clearLogsButton.addEventListener("click", clearSentLogs);
@@ -35,8 +41,8 @@ tabButtons.forEach((button) => {
 });
 
 async function restoreSettings() {
-  const stored = await chrome.storage.local.get(Object.keys(DEFAULT_SETTINGS));
-  const settings = normalizeSettings({ ...DEFAULT_SETTINGS, ...stored });
+  const stored = await chrome.storage.local.get(SETTINGS_KEYS);
+  const settings = mergeSettings(stored);
 
   for (const [key, field] of Object.entries(fields)) {
     if (!field) {
@@ -56,7 +62,7 @@ async function restoreSettings() {
 async function saveSettings(event) {
   event.preventDefault();
   await chrome.storage.local.set(readSettingsFromForm());
-  showStatus("Saved.");
+  showStatus("Saved.", false, event.currentTarget);
 }
 
 async function sendTest() {
@@ -80,17 +86,47 @@ function readSettingsFromForm() {
     enabled: fields.enabled.checked,
     botToken: fields.botToken.value.trim(),
     chatId: fields.chatId.value.trim(),
-    accessUrl: fields.accessUrl.value.trim(),
-    includePageUrl: fields.includePageUrl.checked,
+    teamsEnabled: fields.teamsEnabled.checked,
+    teamsAccessUrl: fields.teamsAccessUrl.value.trim(),
+    includeTeamsPageUrl: fields.includeTeamsPageUrl.checked,
+    outlookEnabled: fields.outlookEnabled.checked,
+    outlookAccessUrl: fields.outlookAccessUrl.value.trim(),
+    includeOutlookPageUrl: fields.includeOutlookPageUrl.checked,
     dedupeTtlMinutes: clampNumber(fields.dedupeTtlMinutes.value, 1, 120, 5),
     minTextLength: clampNumber(fields.minTextLength.value, 1, 200, 8)
   });
 }
 
+function mergeSettings(stored) {
+  const storedSettings = compact(stored);
+  const nextSettings = { ...DEFAULT_SETTINGS, ...storedSettings };
+
+  if (storedSettings.accessUrl && !storedSettings.teamsAccessUrl) {
+    nextSettings.teamsAccessUrl = storedSettings.accessUrl;
+  }
+
+  if (storedSettings.includePageUrl !== undefined && storedSettings.includeTeamsPageUrl === undefined) {
+    nextSettings.includeTeamsPageUrl = storedSettings.includePageUrl;
+  }
+
+  return normalizeSettings(nextSettings);
+}
+
+function compact(value) {
+  return Object.fromEntries(
+    Object.entries(value || {}).filter(([, item]) => item !== undefined && item !== null)
+  );
+}
+
 function normalizeSettings(settings) {
   const nextSettings = { ...settings };
-  if (isDeprecatedCallbackUrl(nextSettings.accessUrl)) {
-    nextSettings.accessUrl = DEFAULT_SETTINGS.accessUrl;
+
+  if (isDeprecatedCallbackUrl(nextSettings.teamsAccessUrl)) {
+    nextSettings.teamsAccessUrl = DEFAULT_SETTINGS.teamsAccessUrl;
+  }
+
+  if (isDeprecatedCallbackUrl(nextSettings.outlookAccessUrl)) {
+    nextSettings.outlookAccessUrl = DEFAULT_SETTINGS.outlookAccessUrl;
   }
 
   return nextSettings;
@@ -111,7 +147,12 @@ function clampNumber(value, min, max, defaultValue) {
   return Math.min(max, Math.max(min, number));
 }
 
-function showStatus(message, isError = false) {
+function showStatus(message, isError = false, scope = document.querySelector(".panel.active")) {
+  const statusElement = scope.querySelector("[data-status]");
+  if (!statusElement) {
+    return;
+  }
+
   statusElement.textContent = message;
   statusElement.classList.toggle("error", isError);
 }
@@ -124,6 +165,8 @@ function showTab(target) {
   panels.forEach((panel) => {
     panel.classList.toggle("active", panel.dataset.tabPanel === target);
   });
+
+  showStatus("");
 }
 
 async function loadSentLogs() {
@@ -139,10 +182,10 @@ function renderLogItem(log) {
 
   const meta = document.createElement("div");
   meta.className = "log-meta";
-  meta.textContent = `${formatDate(log.sentAt)} - ${log.source || "Teams"}`;
+  meta.textContent = `${formatDate(log.sentAt)} - ${log.source || getPlatformName(log.platform)}`;
 
   const sender = document.createElement("strong");
-  sender.textContent = log.sender || "Teams";
+  sender.textContent = log.sender || getPlatformName(log.platform);
 
   const preview = document.createElement("p");
   preview.textContent = log.preview || "";
@@ -179,5 +222,10 @@ function clearSentLogs() {
     }
 
     loadSentLogs();
+    showStatus("Logs cleared.");
   });
+}
+
+function getPlatformName(platform) {
+  return platform === "outlook" ? "Outlook" : "Teams";
 }

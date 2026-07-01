@@ -2,6 +2,7 @@ const SCAN_DELAY_MS = 250;
 const SEEN_TTL_MS = 5 * 60 * 1000;
 const MAX_SEEN = 300;
 const INJECTED_SCRIPT = "src/injected-notification-hook.js";
+const PLATFORM = detectPlatform();
 
 const seen = new Map();
 let scanTimer = null;
@@ -20,12 +21,13 @@ if (document.readyState === "loading") {
 
 function installNotificationApiListener() {
   window.addEventListener("message", (event) => {
-    if (stopped || event.source !== window || !event.data || event.data.type !== "teams-notification-api") {
+    if (stopped || event.source !== window || !event.data || event.data.type !== "web-notification-api") {
       return;
     }
 
     sendCandidate({
       source: "Notification API",
+      platform: PLATFORM,
       title: event.data.title,
       body: event.data.body,
       text: [event.data.title, event.data.body].filter(Boolean).join("\n"),
@@ -124,7 +126,7 @@ function scanVisibleNotificationCandidates() {
     }
 
     const text = normalizeText(element.innerText || element.textContent || "");
-    if (!looksLikeTeamsNotification(element, text)) {
+    if (!looksLikePlatformNotification(element, text)) {
       continue;
     }
 
@@ -135,7 +137,8 @@ function scanVisibleNotificationCandidates() {
 
     seen.set(key, Date.now());
     sendCandidate({
-      source: "Teams DOM",
+      source: `${getPlatformLabel()} DOM`,
+      platform: PLATFORM,
       text,
       pageUrl: location.href,
       observedAt: new Date().toISOString()
@@ -168,13 +171,13 @@ function findCandidateElements() {
   }
 }
 
-function looksLikeTeamsNotification(element, text) {
+function looksLikePlatformNotification(element, text) {
   if (!text || text.length < 8 || text.length > 1200) {
     return false;
   }
 
   const lowerText = text.toLowerCase();
-  const marker = [
+  const teamsMarker = [
     "microsoft teams",
     "sent",
     "message",
@@ -185,6 +188,18 @@ function looksLikeTeamsNotification(element, text) {
     "call"
   ].some((word) => lowerText.includes(word));
 
+  const outlookMarker = [
+    "microsoft outlook",
+    "outlook",
+    "new mail",
+    "new email",
+    "email",
+    "inbox",
+    "calendar",
+    "meeting",
+    "reminder"
+  ].some((word) => lowerText.includes(word));
+
   const elementHint = [
     element.getAttribute("role"),
     element.getAttribute("aria-live"),
@@ -193,6 +208,7 @@ function looksLikeTeamsNotification(element, text) {
   ].join(" ").toLowerCase();
 
   const hasContainerHint = /toast|notification|alert|status|snackbar/.test(elementHint);
+  const marker = PLATFORM === "outlook" ? outlookMarker : teamsMarker;
   return marker || hasContainerHint;
 }
 
@@ -226,7 +242,7 @@ function sendCandidate(payload) {
 
   try {
     chrome.runtime.sendMessage({
-      type: "teams-notification-candidate",
+      type: "web-notification-candidate",
       payload
     });
   } catch (error) {
@@ -262,6 +278,19 @@ function pruneSeen() {
     const firstKey = seen.keys().next().value;
     seen.delete(firstKey);
   }
+}
+
+function detectPlatform() {
+  const hostname = location.hostname.toLowerCase();
+  if (hostname.includes("outlook.") || hostname === "mail.live.com" || hostname.endsWith(".mail.live.com")) {
+    return "outlook";
+  }
+
+  return "teams";
+}
+
+function getPlatformLabel() {
+  return PLATFORM === "outlook" ? "Outlook" : "Teams";
 }
 
 function isExtensionContextAvailable() {

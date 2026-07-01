@@ -1,9 +1,9 @@
-(function installTeamsTelegramNotificationHook() {
-  if (window.__teamsTelegramNotificationHookInstalled) {
+(function installMicrosoftTelegramNotificationHook() {
+  if (window.__microsoftTelegramNotificationHookInstalled) {
     return;
   }
 
-  window.__teamsTelegramNotificationHookInstalled = true;
+  window.__microsoftTelegramNotificationHookInstalled = true;
 
   const NativeNotification = window.Notification;
   if (typeof NativeNotification !== "function") {
@@ -13,7 +13,7 @@
   function HookedNotification(title, options) {
     const body = options && typeof options.body === "string" ? options.body : "";
     window.postMessage({
-      type: "teams-notification-api",
+      type: "web-notification-api",
       title: String(title || ""),
       body
     }, window.location.origin);

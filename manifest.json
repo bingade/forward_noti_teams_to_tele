@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Teams Telegram Notifier",
+  "name": "Microsoft Telegram Notifier",
   "version": "0.1.0",
-  "description": "Forward Microsoft Teams web notification previews to Telegram.",
+  "description": "Forward Microsoft Teams and Outlook web notification previews to Telegram.",
   "permissions": [
     "storage"
   ],
@@ -15,7 +15,15 @@
         "https://teams.microsoft.com/*",
         "https://*.teams.microsoft.com/*",
         "https://teams.live.com/*",
-        "https://*.teams.live.com/*"
+        "https://*.teams.live.com/*",
+        "https://outlook.office.com/*",
+        "https://*.outlook.office.com/*",
+        "https://outlook.office365.com/*",
+        "https://*.outlook.office365.com/*",
+        "https://outlook.live.com/*",
+        "https://*.outlook.live.com/*",
+        "https://mail.live.com/*",
+        "https://*.mail.live.com/*"
       ],
       "js": [
         "src/content.js"
@@ -35,7 +43,15 @@
         "https://teams.microsoft.com/*",
         "https://*.teams.microsoft.com/*",
         "https://teams.live.com/*",
-        "https://*.teams.live.com/*"
+        "https://*.teams.live.com/*",
+        "https://outlook.office.com/*",
+        "https://*.outlook.office.com/*",
+        "https://outlook.office365.com/*",
+        "https://*.outlook.office365.com/*",
+        "https://outlook.live.com/*",
+        "https://*.outlook.live.com/*",
+        "https://mail.live.com/*",
+        "https://*.mail.live.com/*"
       ]
     }
   ],
@@ -44,6 +60,6 @@
     "open_in_tab": true
   },
   "action": {
-    "default_title": "Teams Telegram Notifier"
+    "default_title": "Microsoft Telegram Notifier"
   }
 }

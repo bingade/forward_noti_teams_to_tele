@@ -3,22 +3,24 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Teams Telegram Notifier</title>
+    <title>Microsoft Telegram Notifier</title>
     <link rel="stylesheet" href="options.css">
   </head>
   <body>
     <main class="shell">
       <header>
-        <h1>Teams Telegram Notifier</h1>
-        <p>Forward Teams web notification previews to Telegram from this browser profile.</p>
+        <h1>Microsoft Telegram Notifier</h1>
+        <p>Forward Teams and Outlook web notification previews to Telegram from this browser profile.</p>
       </header>
 
       <nav class="tabs" aria-label="Options sections">
-        <button class="tab active" type="button" data-tab-target="settings">Settings</button>
+        <button class="tab active" type="button" data-tab-target="telegram">Telegram</button>
+        <button class="tab" type="button" data-tab-target="teams">Teams</button>
+        <button class="tab" type="button" data-tab-target="outlook">Outlook</button>
         <button class="tab" type="button" data-tab-target="logs">Sent logs</button>
       </nav>
 
-      <form id="settings-form" class="panel active" data-tab-panel="settings">
+      <form id="telegram-form" class="panel active" data-settings-form data-tab-panel="telegram">
         <label class="toggle">
           <input id="enabled" type="checkbox">
           <span>Enable forwarding</span>
@@ -34,11 +36,6 @@
           <input id="chatId" type="text" autocomplete="off" placeholder="-1001234567890">
         </label>
 
-        <label>
-          <span>Teams callback URL</span>
-          <input id="accessUrl" type="url" autocomplete="off" placeholder="https://teams.microsoft.com/v2/">
-        </label>
-
         <div class="grid">
           <label>
             <span>Dedupe TTL minutes</span>
@@ -51,17 +48,58 @@
           </label>
         </div>
 
-        <label class="toggle">
-          <input id="includePageUrl" type="checkbox">
-          <span>Include current Teams page URL as debug info</span>
-        </label>
-
         <div class="actions">
           <button type="submit">Save</button>
           <button id="test-button" type="button">Send test</button>
         </div>
 
-        <p id="status" role="status"></p>
+        <p class="status" data-status role="status"></p>
+      </form>
+
+      <form id="teams-form" class="panel" data-settings-form data-tab-panel="teams">
+        <label class="toggle">
+          <input id="teamsEnabled" type="checkbox">
+          <span>Enable Teams forwarding</span>
+        </label>
+
+        <label>
+          <span>Teams callback URL</span>
+          <input id="teamsAccessUrl" type="url" autocomplete="off" placeholder="https://teams.microsoft.com/v2/">
+        </label>
+
+        <label class="toggle">
+          <input id="includeTeamsPageUrl" type="checkbox">
+          <span>Include current Teams page URL as debug info</span>
+        </label>
+
+        <div class="actions">
+          <button type="submit">Save Teams config</button>
+        </div>
+
+        <p class="status" data-status role="status"></p>
+      </form>
+
+      <form id="outlook-form" class="panel" data-settings-form data-tab-panel="outlook">
+        <label class="toggle">
+          <input id="outlookEnabled" type="checkbox">
+          <span>Enable Outlook forwarding</span>
+        </label>
+
+        <label>
+          <span>Outlook callback URL</span>
+          <input id="outlookAccessUrl" type="url" autocomplete="off" placeholder="https://outlook.office.com/mail/">
+        </label>
+
+        <label class="toggle">
+          <input id="includeOutlookPageUrl" type="checkbox">
+          <span>Include current Outlook page URL as debug info</span>
+        </label>
+
+        <div class="actions">
+          <button type="submit">Save Outlook config</button>
+        </div>
+
+        <p class="status" data-status role="status"></p>
       </form>
 
       <section class="panel" data-tab-panel="logs">
@@ -74,6 +112,7 @@
         </div>
 
         <ol id="sent-log-list" class="log-list"></ol>
+        <p class="status" data-status role="status"></p>
       </section>
     </main>
 
